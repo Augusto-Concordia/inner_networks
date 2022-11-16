@@ -1,9 +1,43 @@
 import socket
 
+# connection settings
 HOST = '127.0.0.1'
 PORT = 9999
 
+# starts the client process
 
+
+def init():
+    # connects to the server
+    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    c_socket.connect((HOST, PORT))
+
+    while True:
+        choice_display()
+        choice = input(' ')
+
+        # exits the client
+        if choice == '8':
+            print('See you later... Alligator.')
+            break
+
+        success = process_choice(choice, c_socket)
+
+        # if the form entry was a success, send it to the server;
+        # otherwise, wait for more input
+        if success:
+            result = c_socket.recv(1024)
+
+            process_result(choice, result.decode())
+        else:
+            print("\nInvalid operation: Please try again.", end="\n\n")
+
+        input('Press ENTER to continue...')
+
+    c_socket.close()
+
+
+# displays the main choices menu
 def choice_display():
     print('''
 Python DB Menu - Deluxe
@@ -20,6 +54,7 @@ Python DB Menu - Deluxe
 Select:''', end='')
 
 
+# processes the server's find_customer response
 def process_find_customer(raw_result: str):
     if raw_result == 'None':
         print('Not found.')
@@ -36,6 +71,7 @@ Phone #: {phone}
 ''')
 
 
+# processes the server's add_customer response
 def process_add_customer(raw_result: str):
     if raw_result == 'None':
         print('Customer already exists.')
@@ -43,6 +79,7 @@ def process_add_customer(raw_result: str):
         print('Successfully added customer.')
 
 
+# processes the server's delete_customer response
 def process_delete_customer(raw_result: str):
     if raw_result == 'None':
         print('Customer does not exist.')
@@ -50,6 +87,7 @@ def process_delete_customer(raw_result: str):
         print('Successfully deleted customer.')
 
 
+# processes the server's update_customer response
 def process_update_customer(raw_result: str):
     if raw_result == 'None':
         print('Customer does not exist.')
@@ -57,10 +95,12 @@ def process_update_customer(raw_result: str):
         print('Successfully updated customer.')
 
 
+# processes the server's print_report response
 def process_print_report(raw_result: str):
     print('Customer DB Report\n------------------\n' + raw_result)
 
 
+# processes the server's response choice
 def process_result(choice: str, result: str):
     if choice == '1':
         process_find_customer(result)
@@ -74,6 +114,7 @@ def process_result(choice: str, result: str):
         process_print_report(result)
 
 
+# processes the user's find_customer response, returns true if the formed succeeded
 def process_choice(choice: str, connection: socket.socket) -> bool:
     if choice == '1':
         name = input('Name? (case-sensitive) ')
@@ -87,6 +128,9 @@ def process_choice(choice: str, connection: socket.socket) -> bool:
         age = input('Age? ')
         address = input('Address? ')
         phone = input('Phone #? ')
+
+        if name == '':
+            return False
 
         connection.send(
             (choice + '|' + f"{name},{age},{address},{phone}").encode())
@@ -113,6 +157,9 @@ def process_choice(choice: str, connection: socket.socket) -> bool:
         else:
             return False
 
+        if field_to_update == '':
+            return False
+
         connection.send((choice + '|' + name + ',' + field_to_update).encode())
 
         return True
@@ -120,32 +167,7 @@ def process_choice(choice: str, connection: socket.socket) -> bool:
         connection.send((choice + '|').encode())
         return True
     if True:
-        print("\nInvalid operation: Please try again.", end="\n\n")
         return False
-
-
-def init():
-    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c_socket.connect((HOST, PORT))
-
-    while True:
-        choice_display()
-        choice = input(' ')
-
-        if choice == '8':
-            print('See you later... Alligator.')
-            break
-
-        success = process_choice(choice, c_socket)
-
-        if success:
-            result = c_socket.recv(1024)
-
-            process_result(choice, result.decode())
-
-        input('Press ENTER to continue...')
-
-    c_socket.close()
 
 
 if __name__ == '__main__':
