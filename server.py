@@ -13,7 +13,7 @@ entries: List[tuple[str, str, str, str]] = []
 
 def init():
     # reads the database file
-    dbt = open("db.txt", "r")
+    dbt = open("data.txt", "r")
 
     for line in dbt:
         name, age, address, phone = line.split("|")
